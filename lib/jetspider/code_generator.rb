@@ -1,7 +1,6 @@
 require 'jetspider/ast'
 require 'jetspider/exception'
 
-
 module JetSpider
   class CodeGenerator < AstVisitor
     def initialize(object_file)
