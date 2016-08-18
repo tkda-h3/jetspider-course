@@ -1,13 +1,14 @@
 require 'jetspider/ast'
 require 'jetspider/exception'
 
+
 module JetSpider
   class CodeGenerator < AstVisitor
     def initialize(object_file)
       @object_file = object_file
       @asm = nil
     end
-
+    
     def generate_object_file(ast)
       @compiling_toplevel = false
       ast.global_functions.each do |fun|
