@@ -52,7 +52,7 @@ module JetSpider
 
     def visit_ExpressionStatementNode(node)
       visit node.value
-      pop_statement_value
+       pop_statement_value
     end
 
     def pop_statement_value
@@ -80,9 +80,12 @@ module JetSpider
     #
     # Functions-related
     #
-
+    
     def visit_FunctionCallNode(n)
-      raise NotImplementedError, 'FunctionCallNode'
+      @asm.callgname n.value.value
+      n.arguments.value.each{ |x| visit x}
+      @asm.call n.arguments.value.size
+      #raise NotImplementedError, 'FunctionCallNode'
     end
 
     def visit_FunctionDeclNode(n)
@@ -163,7 +166,16 @@ module JetSpider
     end
 
     def visit_ConditionalNode(n)
-      raise NotImplementedError, 'ConditinalNode'
+      visit n.conditions
+      loc1 = @asm.lazy_location
+      @asm.ifeq loc1
+      visit n.value
+      loc2 = @asm.lazy_location
+      @asm.goto loc2
+      @asm.fix_location(loc1)
+      visit n.else
+      @asm.fix_location(loc2)
+      #raise NotImplementedError, 'ConditinalNode'
     end
 
     def visit_WhileNode(n)
@@ -207,7 +219,10 @@ module JetSpider
     end
 
     def visit_AddNode(n)
-      raise NotImplementedError, 'AddNode'
+      visit n.left
+      visit n.value
+      @asm.add
+      #raise NotImplementedError, 'AddNode'
     end
 
     def visit_SubtractNode(n)
@@ -303,7 +318,7 @@ module JetSpider
     def visit_NullNode(n)
       @asm.null
     end
-
+    
     def visit_TrueNode(n)
       @asm.true
     end
@@ -317,7 +332,8 @@ module JetSpider
     end
 
     def visit_NumberNode(n)
-      raise NotImplementedError, 'NumberNode'
+      @asm.int8(n.value)
+      #raise NotImplementedError, 'NumberNode'
     end
 
     def visit_StringNode(n)
