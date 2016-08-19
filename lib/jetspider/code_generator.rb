@@ -70,7 +70,7 @@ module JetSpider
     def visit_BlockNode(n)
       visit n.value
     end
-
+    
     def visit_CommaNode(n)
       visit n.left
       @asm.pop
@@ -219,11 +219,55 @@ module JetSpider
       visit n.value
     end
 
+    
     def visit_AddNode(n)
-      visit n.left
-      visit n.value
-      @asm.add
-      #raise NotImplementedError, 'AddNode'
+      if (n.left.is_a? "NumberNode") && (n.value.is_a? "NumberNode")
+        return true, n.left.value.to_i+n.value.to_i
+      end
+      
+      if n.left.is_a? "AddNode"
+        left_bool,left_num = visit_AddNode(n.left)
+      elsif n.left.is_a? "NumberNode"
+        return true, n.left.value.to_i
+      else
+        left_bool,left_num = false,nil
+      end
+      if n.value.is_a? "AddNode"
+        value_bool,value_num = visit_AddNode(n.value)
+      else
+        value_bool,value_num = false,nil
+      end
+      
+      if left_bool && value_bool
+        #@asm.int8 left_num+value_num
+        return true, left_num + value_num
+      elsif left_bool
+        @asm.int8 left_num
+        visit n.value
+        @asm.add
+        return false,nil
+      elsif value_bool
+        visit n.left
+        @asm.int8 value_num
+        @asm.add
+        return false.nil
+      else
+        visit n.left
+        visit n.value
+        @asm.add
+        return false,nil
+      end
+      # #bool,nums_array = all_leaves_NumberNode?(n)
+      # if bool
+      #   p [:out_func, nums_array]
+      #   @asm.int8 nums_array.inject{|sum,num| sum += num}
+      # else
+      #   visit n.left
+      #   visit n.value
+      #   @asm.add
+      # end
+      # #raise NotImplementedError, 'AddNode'
+
     end
 
     def visit_SubtractNode(n)
@@ -333,7 +377,11 @@ module JetSpider
     end
 
     def visit_NumberNode(n)
-      @asm.int8(n.value)
+      if n.value.to_i == 1
+        @asm.one
+      else
+        @asm.int8(n.value)
+      end
       #raise NotImplementedError, 'NumberNode'
     end
 
