@@ -87,19 +87,19 @@ module JetSpider
       @asm.call n.arguments.value.size
       #raise NotImplementedError, 'FunctionCallNode'
     end
-
+    
     def visit_FunctionDeclNode(n)
       unless @compiling_toplevel
         raise SemanticError, "nested function not implemented yet"
       end
-      # Function declarations are compiled in other step,
-      # we just ignore them while compiling toplevel.
     end
-
+    
     def visit_FunctionExprNode(n) raise "FunctionExprNode not implemented"; end
-
+    
     def visit_ReturnNode(n)
-      raise NotImplementedError, 'ReturnNode'
+      visit n.value
+      @asm.return 
+      #raise NotImplementedError, 'ReturnNode'
     end
 
     # These nodes should not be visited directly
@@ -115,7 +115,8 @@ module JetSpider
       var = n.variable
       case
       when var.parameter?
-        raise NotImplementedError, 'ResolveNode - parameter'
+        @asm.getarg var.index
+        #raise NotImplementedError, 'ResolveNode - parameter'
       when var.local?
         raise NotImplementedError, 'ResolveNode - local'
       when var.global?
