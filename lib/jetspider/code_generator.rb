@@ -219,55 +219,55 @@ module JetSpider
       visit n.value
     end
 
+    def add_recursion(n)
+      class_name = n.class.to_s.split("::").last
+#      p [:debug, n.class]
+      if class_name ==  "NumberNode"
+        return true,n.value
+      elsif class_name ==  "AddNode"
+        l_bool,l_num = add_recursion(n.left)
+        v_bool,v_num = add_recursion(n.value)
+        if l_bool && v_bool
+          return true,l_num+v_num
+        else
+          return false,nil
+        end
+      elsif class_name ==  "ParentheticalNode"
+        add_recursion(n.value)
+      else
+        p [:dubug, n.class.to_s]
+        return false,nil
+      end
+    end
     
     def visit_AddNode(n)
-      if (n.left.is_a? "NumberNode") && (n.value.is_a? "NumberNode")
-        return true, n.left.value.to_i+n.value.to_i
-      end
-      
-      if n.left.is_a? "AddNode"
-        left_bool,left_num = visit_AddNode(n.left)
-      elsif n.left.is_a? "NumberNode"
-        return true, n.left.value.to_i
-      else
-        left_bool,left_num = false,nil
-      end
-      if n.value.is_a? "AddNode"
-        value_bool,value_num = visit_AddNode(n.value)
-      else
-        value_bool,value_num = false,nil
-      end
-      
-      if left_bool && value_bool
-        #@asm.int8 left_num+value_num
-        return true, left_num + value_num
-      elsif left_bool
-        @asm.int8 left_num
-        visit n.value
+      l = n.left
+      v= n.value
+      l_bool,l_num = add_recursion(l)
+      v_bool,v_num = add_recursion(v)
+      if l_bool && v_bool
+        @asm.int8 l_num+v_num
+      elsif l_bool
+        if l_num == 1
+          @asm.one
+        else
+          @asm.int8 l_num
+        end
+        visit v
         @asm.add
-        return false,nil
-      elsif value_bool
-        visit n.left
-        @asm.int8 value_num
+      elsif v_bool
+        visit l
+        if v_num == 1
+          @asm.one
+        else
+          @asm.int8 v_num
+        end
         @asm.add
-        return false.nil
       else
-        visit n.left
-        visit n.value
-        @asm.add
-        return false,nil
+        visit l
+        visit v
+        @asm.add 
       end
-      # #bool,nums_array = all_leaves_NumberNode?(n)
-      # if bool
-      #   p [:out_func, nums_array]
-      #   @asm.int8 nums_array.inject{|sum,num| sum += num}
-      # else
-      #   visit n.left
-      #   visit n.value
-      #   @asm.add
-      # end
-      # #raise NotImplementedError, 'AddNode'
-
     end
 
     def visit_SubtractNode(n)
@@ -376,12 +376,14 @@ module JetSpider
       @asm.this
     end
 
-    def visit_NumberNode(n)
+    def visit_NumberNode(n,opt=false)
+      return true if opt && n.value.to_i == 1 
       if n.value.to_i == 1
         @asm.one
       else
         @asm.int8(n.value)
       end
+      return false
       #raise NotImplementedError, 'NumberNode'
     end
 
